@@ -5,10 +5,6 @@ group('deploy', function () {
     desc("Setup application in environment.");
     task('setup','app', function ($app) {
         info("deploy","setting up environment");
-        $cmd = array(
-            "umask {$app->env->umask}",
-            "if test ! -d {$app->env->deploy_to}; then mkdir -p {$app->env->deploy_to}; fi"
-        );
 
         if ($app->env->releases === false) {
             $cmd[] = $app->env->scm->create($app->env->deploy_to);

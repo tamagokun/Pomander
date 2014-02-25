@@ -18,15 +18,17 @@ class Git extends Scm
     {
         $cmd = array();
 
-        $cmd[] = "cd {$location}";
-        $cmd[] = "rm -rf .git";
-        $cmd[] = "rm -rf REVISION";
-        $cmd[] = "git init -q";
-        $cmd[] = "git remote add origin {$this->repository}";
-        $cmd[] = "git fetch origin -q";
-        $cmd[] = "git reset --hard origin/master -q";
+        $cmd[] = "umask {$this->app->env->umask}";
+        $cmd[] = "if test ! -d {$location}; then mkdir {$location}; fi";
 
-        return implode(' && ', $cmd);
+        $cmd[] = "rm -rf {$location}/*";
+        $cmd[] = "cd {$location}";
+        $cmd[] = "git init -q";
+
+        $remote = isset($this->app->env->remote)? $this->app->env->remote : "origin";
+        $cmd[] = "git remote add {$remote} {$this->repository}";
+
+        return implode(' && ', $cmd) . ' && ' . $this->update();
     }
 
     /**
