@@ -16,7 +16,19 @@ class Git extends Scm
      */
     public function create($location)
     {
-        return "git clone -q {$this->repository} {$location}";
+        $cmd = array();
+
+        $cmd[] = "umask {$this->app->env->umask}";
+        $cmd[] = "if test ! -d {$location}; then mkdir {$location}; fi";
+
+        $cmd[] = "rm -rf {$location}/*";
+        $cmd[] = "cd {$location}";
+        $cmd[] = "git init -q";
+
+        $remote = isset($this->app->env->remote)? $this->app->env->remote : "origin";
+        $cmd[] = "git remote add {$remote} {$this->repository}";
+
+        return implode(' && ', $cmd) . ' && ' . $this->update();
     }
 
     /**
@@ -32,12 +44,12 @@ class Git extends Scm
         $cmd[] = "git fetch --tags -q {$remote}";
 
         // Search revision
-        if(!empty($this->app->env->revision)) {
+        if (!empty($this->app->env->revision)) {
             $commit = $this->app->env->revision;
         } else {
-            if(!empty($this->app["branch"])) {
+            if (!empty($this->app["branch"])) {
                 $commit = $this->get_commit_sha($this->app["branch"]);
-            } elseif(!empty($this->app->env->branch)) {
+            } elseif (!empty($this->app->env->branch)) {
                 $commit = $this->get_commit_sha($this->app->env->branch);
             } else {
                 $commit = 'HEAD';
@@ -71,7 +83,7 @@ class Git extends Scm
     public function get_commit_sha($ref)
     {
         // if specifying a remote ref, just grab the branch name
-        if(strpos($ref, "/") !== false) {
+        if (strpos($ref, "/") !== false) {
             $ref = explode("/", $ref);
             $ref = end($ref);
         }
