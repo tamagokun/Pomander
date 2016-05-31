@@ -1,20 +1,19 @@
 <?php
+namespace Pomander\Method;
 
-namespace Pomander\Scm;
-
-use Pomander\Scm;
+use Pomander\Method;
 
 /**
  * Class Git
- * @package Pomander\Scm
+ * @package Pomander\Method
  */
-class Git extends Scm
+class Git extends Method
 {
     /**
      * @param $location
      * @return string
      */
-    public function create($location)
+    public function setup_code($location)
     {
         return "git clone -q {$this->repository} {$location}";
     }
@@ -22,7 +21,7 @@ class Git extends Scm
     /**
      * @return string
      */
-    public function update()
+    public function update_code()
     {
         $cmd = array();
 
@@ -32,12 +31,12 @@ class Git extends Scm
         $cmd[] = "git fetch --tags -q {$remote}";
 
         // Search revision
-        if(!empty($this->app->env->revision)) {
+        if (!empty($this->app->env->revision)) {
             $commit = $this->app->env->revision;
         } else {
-            if(!empty($this->app["branch"])) {
+            if (!empty($this->app["branch"])) {
                 $commit = $this->get_commit_sha($this->app["branch"]);
-            } elseif(!empty($this->app->env->branch)) {
+            } elseif (!empty($this->app->env->branch)) {
                 $commit = $this->get_commit_sha($this->app->env->branch);
             } else {
                 $commit = 'HEAD';
@@ -59,7 +58,7 @@ class Git extends Scm
     /**
      * @return string
      */
-    public function revision()
+    public function version()
     {
         return "git rev-parse HEAD";
     }
@@ -71,18 +70,17 @@ class Git extends Scm
     public function get_commit_sha($ref)
     {
         // if specifying a remote ref, just grab the branch name
-        if(strpos($ref, "/") !== false) {
+        if (strpos($ref, "/") !== false) {
             $ref = explode("/", $ref);
             $ref = end($ref);
         }
 
         list($status, $commit) = run_local("git ls-remote {$this->app->env->repository} {$ref}");
-        if($status > 0 || !$commit) abort("update", "failed to retrieve commit for {$ref}.");
+        if ($status > 0 || !$commit) abort("update", "failed to retrieve commit for {$ref}.");
 
         $commit = array_shift($commit);
         $commit = substr($commit, 0, strpos($commit, "\t"));
 
         return $commit;
     }
-
 }
